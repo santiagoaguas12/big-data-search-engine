@@ -1,0 +1,53 @@
+# -----------------------------------------------------------------------
+# .gitignore — MySearchEngine
+# Instalar dependencias al clonar: pip install -r requirements.txt
+# -----------------------------------------------------------------------
+
+# --- Entorno virtual ----------------------------------------------------
+venv/
+.venv/
+env/
+.env/
+
+# --- Python bytecode ----------------------------------------------------
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# --- Distribución / empaquetado -----------------------------------------
+build/
+dist/
+*.egg-info/
+*.egg
+MANIFEST
+
+# --- Pytest / coverage --------------------------------------------------
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# --- IDEs y editores ----------------------------------------------------
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.code-workspace
+
+# --- Sistema operativo --------------------------------------------------
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Flask / entorno de desarrollo --------------------------------------
+instance/
+.env
+*.env
+flask_session/
+
+# --- Logs ---------------------------------------------------------------
+*.log

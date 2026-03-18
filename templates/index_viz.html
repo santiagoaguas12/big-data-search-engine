@@ -1,0 +1,238 @@
+{% extends "layout.html" %}
+
+{% block title %}Index Visualization{% endblock %}
+
+{% block content %}
+
+{# ── Page heading ─────────────────────────────────────────────────────────── #}
+<div class="viz-page-header">
+    <div>
+        <h1 class="viz-page-title">
+            <span class="viz-page-icon" aria-hidden="true">&#9674;</span>
+            Index Visualization
+        </h1>
+        <p class="viz-page-sub">
+            Enhancement F &mdash; Inverted Index &middot; Posting Lists &middot; BM25 Statistics
+        </p>
+    </div>
+    <a href="{{ url_for('index') }}" class="viz-back-link">
+        &#8592; Search
+    </a>
+</div>
+
+{# ── Corpus error ─────────────────────────────────────────────────────────── #}
+{% if error or corpus_error %}
+<div class="alert alert--error" role="alert">
+    <strong>Error:</strong> {{ error or corpus_error }}
+</div>
+
+{% else %}
+
+{# ── Statistics panel ─────────────────────────────────────────────────────── #}
+<div class="stats-panel" aria-label="Corpus statistics">
+    <div class="stats-item">
+        <span class="stats-value">{{ stats.total_documents }}</span>
+        <span class="stats-label">Documents</span>
+    </div>
+    <div class="stats-sep" aria-hidden="true"></div>
+    <div class="stats-item">
+        <span class="stats-value">{{ stats.vocab_size }}</span>
+        <span class="stats-label">Vocabulary terms</span>
+    </div>
+    <div class="stats-sep" aria-hidden="true"></div>
+    <div class="stats-item">
+        <span class="stats-value">{{ stats.avg_doc_length }}</span>
+        <span class="stats-label">Avg tokens / doc</span>
+    </div>
+    <div class="stats-sep" aria-hidden="true"></div>
+    <div class="stats-item">
+        <span class="stats-value">k&#8321; = {{ stats.bm25_k1 }}</span>
+        <span class="stats-label">BM25 k&#8321;</span>
+    </div>
+    <div class="stats-sep" aria-hidden="true"></div>
+    <div class="stats-item">
+        <span class="stats-value">b = {{ stats.bm25_b }}</span>
+        <span class="stats-label">BM25 b</span>
+    </div>
+    <div class="stats-sep" aria-hidden="true"></div>
+    <div class="stats-item">
+        <span class="stats-value stats-value--ok">&#10003; Ready</span>
+        <span class="stats-label">Index status</span>
+    </div>
+</div>
+
+{# ── Top terms bar chart ──────────────────────────────────────────────────── #}
+{% if top_chart_terms %}
+{% set max_df = top_chart_terms[0].df %}
+<section class="viz-section" aria-labelledby="chart-heading">
+    <h2 class="viz-section-title" id="chart-heading">
+        Top {{ top_chart_terms|length }} Terms by Document Frequency
+    </h2>
+    <p class="viz-section-sub">
+        How many documents contain each term — a proxy for the term's breadth of relevance.
+    </p>
+    <div class="term-chart" role="list">
+        {% for item in top_chart_terms %}
+        {% set bar_pct = (item.df / max_df * 100)|round(1) %}
+        <div class="term-chart-row" role="listitem">
+            <span class="term-chart-label" title="Stem: {{ item.term }}">{{ item.term }}</span>
+            <div class="term-chart-track" aria-label="df={{ item.df }}">
+                <div class="term-chart-bar" style="width: {{ bar_pct }}%"></div>
+            </div>
+            <span class="term-chart-df">df={{ item.df }}</span>
+            <span class="term-chart-tf">tf={{ item.total_tf }}</span>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{# ── Index browser ────────────────────────────────────────────────────────── #}
+<section class="viz-section" aria-labelledby="browser-heading">
+    <div class="viz-browser-header">
+        <h2 class="viz-section-title" id="browser-heading">
+            Index Browser
+            <span class="viz-term-count">
+                {% if term_filter %}
+                    {{ total_terms }} match{% if total_terms != 1 %}es{% endif %} for &ldquo;{{ term_filter }}&rdquo;
+                {% else %}
+                    {{ total_terms }} term{% if total_terms != 1 %}s{% endif %} total
+                {% endif %}
+            </span>
+        </h2>
+
+        {# Filter form #}
+        <form class="viz-filter-form" method="get"
+              action="{{ url_for('index_visualization') }}" role="search"
+              aria-label="Filter index terms">
+            <input  class="viz-filter-input"
+                    type="search"
+                    id="termFilter"
+                    name="term"
+                    value="{{ term_filter }}"
+                    placeholder="Filter by term stem…"
+                    autocomplete="off"
+                    spellcheck="false" />
+            <button class="viz-filter-btn" type="submit">Filter</button>
+            {% if term_filter %}
+            <a class="viz-filter-clear" href="{{ url_for('index_visualization') }}"
+               aria-label="Clear filter">&#10005; Clear</a>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if entries %}
+    <div class="viz-table-wrap">
+        <table class="viz-table" aria-label="Inverted index entries">
+            <thead>
+                <tr>
+                    <th class="col-rank">#</th>
+                    <th class="col-term">Term (stem)</th>
+                    <th class="col-df" title="Document Frequency">DF</th>
+                    <th class="col-idf" title="Inverse Document Frequency (BM25)">IDF</th>
+                    <th class="col-tf" title="Total Term Frequency across corpus">TF<sub>total</sub></th>
+                    <th class="col-posting">Posting List</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr class="viz-row">
+                    <td class="col-rank">{{ entry.rank }}</td>
+                    <td class="col-term">
+                        <code class="term-token">{{ entry.term }}</code>
+                    </td>
+                    <td class="col-df">
+                        <span class="df-badge">{{ entry.df }}</span>
+                    </td>
+                    <td class="col-idf">{{ entry.idf }}</td>
+                    <td class="col-tf">{{ entry.total_tf }}</td>
+                    <td class="col-posting">
+                        <div class="posting-list">
+                            {% for p in entry.posting_list %}
+                            <span class="posting-pill" title="{{ p.title }}">
+                                <span class="posting-docid">doc&nbsp;{{ p.doc_id }}</span>
+                                <span class="posting-sep">:</span>
+                                <span class="posting-tf">tf={{ p.tf }}</span>
+                            </span>
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {# ── Pagination ──────────────────────────────────────────────────────── #}
+    {% if total_pages > 1 %}
+    <nav class="viz-pagination" aria-label="Pagination">
+        {% if page > 1 %}
+        <a class="page-btn"
+           href="{{ url_for('index_visualization', term=term_filter, page=page-1) }}"
+           aria-label="Previous page">&#8592; Prev</a>
+        {% else %}
+        <span class="page-btn page-btn--disabled" aria-disabled="true">&#8592; Prev</span>
+        {% endif %}
+
+        <span class="page-info">
+            Page {{ page }} of {{ total_pages }}
+            &nbsp;&middot;&nbsp;
+            {% set start_row = (page - 1) * per_page + 1 %}
+            {% set end_row   = [page * per_page, total_terms]|min %}
+            Terms {{ start_row }}&ndash;{{ end_row }}
+        </span>
+
+        {% if page < total_pages %}
+        <a class="page-btn"
+           href="{{ url_for('index_visualization', term=term_filter, page=page+1) }}"
+           aria-label="Next page">Next &#8594;</a>
+        {% else %}
+        <span class="page-btn page-btn--disabled" aria-disabled="true">Next &#8594;</span>
+        {% endif %}
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <div class="viz-empty">
+        <p class="viz-empty-icon" aria-hidden="true">&#9650;</p>
+        <p class="viz-empty-title">No terms found</p>
+        <p class="viz-empty-hint">
+            {% if term_filter %}
+                No terms in the vocabulary match &ldquo;<strong>{{ term_filter }}</strong>&rdquo;.
+                <a href="{{ url_for('index_visualization') }}">Show all terms</a>.
+            {% else %}
+                The index is empty. Make sure corpus.json has documents with text.
+            {% endif %}
+        </p>
+    </div>
+    {% endif %}
+</section>
+
+{# ── Document corpus reference ─────────────────────────────────────────────── #}
+{% if doc_titles %}
+<section class="viz-section" aria-labelledby="corpus-heading">
+    <h2 class="viz-section-title" id="corpus-heading">
+        Corpus Documents
+        <span class="viz-term-count">{{ doc_titles|length }} document{% if doc_titles|length != 1 %}s{% endif %}</span>
+    </h2>
+    <p class="viz-section-sub">
+        Document IDs referenced in the posting lists above.
+    </p>
+    <div class="doc-ref-grid">
+        {% for doc in stats.get('_corpus_docs', []) %}{% endfor %}
+        {% for doc_id, title in doc_titles.items()|sort %}
+        <div class="doc-ref-card">
+            <span class="doc-ref-id">doc {{ doc_id }}</span>
+            <span class="doc-ref-title">{{ title }}</span>
+            {% if doc_lengths and doc_id in doc_lengths %}
+            <span class="doc-ref-tokens">{{ doc_lengths[doc_id] }} tokens</span>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% endif %}{# end else (no error) #}
+
+{% endblock %}

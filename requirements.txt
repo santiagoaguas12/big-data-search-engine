@@ -1,0 +1,5 @@
+# requirements.txt — MySearchEngine
+# Instalar con: pip install -r requirements.txt
+
+Flask==3.0.3
+nltk==3.8.1
