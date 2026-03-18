@@ -12,13 +12,13 @@
 
 **Chosen Domain:** Technological Entrepreneurship
 
-*I chose this topic because, while I love the software field, I wouldn't want to dedicate my whole life to development. Lately, I've been focusing a lot on the business side—companies, startups, etc.—which I find much more interesting than development itself.*
+*I chose this topic because, while I love the software field, I wouldn't want to dedicate my whole life to development. Lately, I've been focusing a lot on the business side, companies, startups, etc. Which I find much more interesting than development itself.*
 
 ---
 
 ## Project Purpose
 
-Build a functional search engine **from scratch**, without any external IR
+Build a functional search engine from scratch, without any external IR
 libraries (no Whoosh, Elasticsearch, Lucene, or equivalent). The system
 demonstrates core Information Retrieval concepts through direct implementation:
 
